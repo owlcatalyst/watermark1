@@ -1,0 +1,111 @@
+.upload-frame {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 40vh;
+  min-height: 300px;
+}
+
+.upload-frame > div {
+  border-width: 3px;
+  border-color: #00d1b2;
+  border-style: dashed;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  width: 80%;
+  height: 100%;
+}
+
+/*显示底图*/
+.image-container {
+  width: 100%;
+  text-align: center;
+}
+
+.image-container canvas {
+  max-width: 100%;
+  max-height: 400px;
+  object-fit: contain;
+}
+
+.image-container .progress-container {
+  height: 100vh;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.button .feather {
+  transform: translateY(4px);
+  margin-right: 3px;
+}
+
+.feather {
+  transform: translateY(25%);
+}
+
+
+.base-menu .slider {
+  margin: 0.5rem 0 !important;
+}
+
+body {
+  background: hsl(0, 0%, 96%);
+}
+body > div {
+  max-width: 80rem;
+  margin: 0 auto;
+}
+
+@media screen and (min-device-width: 768px) {
+  body > div > .columns {
+    height: 100vh;
+  }
+
+  body > div > .columns > .column {
+    height: 100%;
+  }
+}
+
+.menu-down {
+  padding: 1rem 1.5rem;
+}
+
+/* form专供，横排表格*/
+.field.is-horizontal,
+.field-body {
+  align-items: center;
+}
+
+.field.is-horizontal label {
+  width: 3rem;
+}
+
+.field-label {
+  flex-grow: 0;
+}
+
+/*左侧添加水印文字*/
+.field.has-addons .control:first-child {
+  width: 100%;
+}
+
+/*输出格式的单选框*/
+.output-format-radio .control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+}
+.output-format-radio .control span {
+  padding-bottom: 1rem;
+}
+
+.output-format-radio .control svg {
+  padding: 3px;
+}
