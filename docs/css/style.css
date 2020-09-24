@@ -50,7 +50,6 @@
   transform: translateY(25%);
 }
 
-
 .base-menu .slider {
   margin: 0.5rem 0 !important;
 }
@@ -84,7 +83,8 @@ body > div {
 }
 
 .field.is-horizontal label {
-  width: 3rem;
+  width: 5.5rem;
+  word-wrap: break-word;
 }
 
 .field-label {

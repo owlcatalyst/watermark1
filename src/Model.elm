@@ -2,6 +2,8 @@ module Model exposing (..)
 
 import Array exposing (Array)
 import Canvas.Texture as Texture
+import I18n exposing (Language(..), Translation, getTranslation, str2Lang)
+import Json.Decode as D
 import Json.Encode as E
 
 
@@ -64,6 +66,8 @@ type alias Model =
     , clickPoint : Point
     , dragState : DragState
     , radio : Float
+    , translations : Translation
+    , lang : Language
     }
 
 
@@ -84,29 +88,70 @@ type alias Watermark =
     }
 
 
-initModel : List String -> Model
-initModel fmts =
-    { imageUrl = ""
-    , imageTexture = Nothing
-    , imageSize = { width = 0, height = 0 }
-    , imageName = "未上传图片"
-    , imageState = None
-    , watermark = Nothing
-    , watermarkInput = ""
-    , selectedIndex = -1
-    , format =
-        { name = "PNG"
-        , ext = ".png"
-        , mime = "image/png"
-        }
-    , fontCDN = ""
-    , supportedFormat = fmts
-    , log = "应用启动"
-    , tempWatermark = Nothing
-    , clickPoint = { x = 0, y = 0 }
-    , dragState = Static
-    , radio = 0
+type alias Flag =
+    { supportedFormats : List String
+    , lang : String
     }
+
+
+initModel : D.Value -> Model
+initModel flag =
+    let
+        flagDecoder =
+            D.map2 Flag
+                (D.at [ "supportedFormats" ] (D.list D.string))
+                (D.at [ "lang" ] D.string)
+    in
+    case D.decodeValue flagDecoder flag of
+        Ok f ->
+            { imageUrl = ""
+            , imageTexture = Nothing
+            , imageSize = { width = 0, height = 0 }
+            , imageName = ""
+            , imageState = None
+            , watermark = Nothing
+            , watermarkInput = ""
+            , selectedIndex = -1
+            , format =
+                { name = "PNG"
+                , ext = ".png"
+                , mime = "image/png"
+                }
+            , fontCDN = ""
+            , supportedFormat = f.supportedFormats
+            , log = (getTranslation (str2Lang f.lang)).log.appReady
+            , tempWatermark = Nothing
+            , clickPoint = { x = 0, y = 0 }
+            , dragState = Static
+            , radio = 0
+            , translations = getTranslation (str2Lang f.lang)
+            , lang = str2Lang f.lang
+            }
+
+        Err err ->
+            { imageUrl = ""
+            , imageTexture = Nothing
+            , imageSize = { width = 0, height = 0 }
+            , imageName = ""
+            , imageState = None
+            , watermark = Nothing
+            , watermarkInput = ""
+            , selectedIndex = -1
+            , format =
+                { name = "PNG"
+                , ext = ".png"
+                , mime = "image/png"
+                }
+            , fontCDN = ""
+            , supportedFormat = []
+            , log = D.errorToString err
+            , tempWatermark = Nothing
+            , clickPoint = { x = 0, y = 0 }
+            , dragState = Static
+            , radio = 0
+            , translations = getTranslation EN
+            , lang = EN
+            }
 
 
 initWatermark : WatermarkType -> String -> Size -> Watermark

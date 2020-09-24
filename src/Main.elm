@@ -8,8 +8,9 @@ import Canvas.Texture as Texture
 import File exposing (File)
 import File.Select as Select
 import Html exposing (Html, div, span, text)
-import Html.Attributes exposing (checked, class, disabled, href, name, placeholder, rel, style, value)
+import Html.Attributes exposing (checked, class, disabled, href, name, placeholder, rel, selected, style, value)
 import Html.Events exposing (on, onClick, onInput)
+import I18n exposing (Language, Translation, getLanguageList, getTranslation)
 import Json.Decode as D
 import Json.Encode as E
 import Model as M exposing (BasicImageState(..), DragState(..), FormatData, ImageType(..), Model, Point, Watermark, WatermarkType(..))
@@ -25,7 +26,7 @@ import UI.Size as Size
 -- MAIN
 
 
-main : Program (List String) Model Msg
+main : Program D.Value Model Msg
 main =
     Browser.element { init = init, update = update, view = view, subscriptions = subscriptions }
 
@@ -34,7 +35,7 @@ main =
 -- MODEL
 
 
-init : List String -> ( Model, Cmd Msg )
+init : D.Value -> ( Model, Cmd Msg )
 init fmts =
     ( M.initModel fmts, Cmd.none )
 
@@ -62,6 +63,7 @@ type Msg
     | DragStart PosSize
     | DragMove Point
     | DragStop Point
+    | ChangeLanguage Language
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -121,10 +123,10 @@ update msg model =
                                     ( model, Cmd.none )
 
                 Nothing ->
-                    ( { model | log = "纹理加载失败" }, Cmd.none )
+                    ( { model | log = model.translations.log.loadTextureFailed }, Cmd.none )
 
         RemoveImage ->
-            ( { model | imageUrl = "", log = "未上传图片", imageSize = { width = 0, height = 0 }, imageState = None }, Cmd.none )
+            ( { model | imageUrl = "", log = model.translations.log.noImage, imageSize = { width = 0, height = 0 }, imageState = None }, Cmd.none )
 
         -- 水印处理相关
         WatermarkInput text ->
@@ -193,6 +195,9 @@ update msg model =
         DragStop _ ->
             ( { model | dragState = Static }, Cmd.none )
 
+        ChangeLanguage lang ->
+            ( { model | translations = getTranslation lang }, Cmd.none )
+
 
 
 -- VIEW
@@ -219,19 +224,22 @@ menuLeft model =
     let
         available =
             disabled (model.imageState /= Loaded)
+
+        t =
+            model.translations
     in
     section
         []
         [ container [ style "width" "100%" ]
             [ title [] [ text "Watermark+1" ]
             , notification [ UI.Color.is InfoLight ] [ text model.log ]
-            , field [] [ label [] [ text "水印列表" ] ]
+            , field [] [ label [] [ text t.menu.watermarkList ] ]
             , field []
-                [ selectMultiple 8
+                [ selectMultiple 6
                     [ style "width" "100%" ]
                     (case model.watermark of
                         Just watermark ->
-                            Array.map (\t -> t.text) watermark |> Array.toList
+                            Array.map (\w -> w.text) watermark |> Array.toList
 
                         Nothing ->
                             []
@@ -240,14 +248,14 @@ menuLeft model =
                     WatermarkSelected
                 ]
             , fieldAddon []
-                [ input [ onInput WatermarkInput, placeholder "请输入文字水印……", value model.watermarkInput ] []
-                , iconButton Icons.plus [ available, onClick (WatermarkAdd Text) ] [ text "文字" ]
+                [ input [ onInput WatermarkInput, placeholder t.menu.inputPlaceHolder, value model.watermarkInput ] []
+                , iconButton Icons.plus [ available, onClick (WatermarkAdd Text) ] [ text t.button.textWatermark ]
                 ]
             , fieldGroup []
-                [ iconButton Icons.plus [ available, onClick (WatermarkAdd Image) ] [ text "图片水印" ]
-                , iconButton Icons.trash2 [ available, UI.Color.is DangerLight, onClick WatermarkRemove ] [ text "删除" ]
+                [ iconButton Icons.plus [ available, onClick (WatermarkAdd Image) ] [ text t.button.imageWatermark ]
+                , iconButton Icons.trash2 [ UI.Color.is DangerLight, onClick WatermarkRemove ] [ text t.button.deleteWatermark ]
                 ]
-            , field [] [ label [] [ text "输出格式" ] ]
+            , field [] [ label [] [ text t.menu.outputFormat ] ]
 
             -- 选择图片格式
             , field [ class "output-format-radio" ]
@@ -256,10 +264,10 @@ menuLeft model =
                         (\tp ->
                             let
                                 notable =
-                                    List.length (List.filter (\t -> t == tp.mime) model.supportedFormat) == 0
+                                    List.length (List.filter (\w -> w == tp.mime) model.supportedFormat) == 0
                             in
                             if notable then
-                                tooltip "您的浏览器不支持转换该格式"
+                                tooltip t.menu.doNotSupport
                                     []
                                     [ radio []
                                         [ checked (model.format == tp)
@@ -278,8 +286,19 @@ menuLeft model =
                         )
                         M.formatData
                 ]
-            , field [] [ label [] [ text "字体CDN" ] ]
+            , field [] [ label [] [ text t.menu.fontCDN ] ]
             , field [] [ control [] [ input [ value model.fontCDN, onInput UpdateFontCDN ] [] ] ]
+            , field [] [ label [] [ text t.menu.language ] ]
+            , field []
+                [ select [] <|
+                    List.map
+                        (\item ->
+                            Html.option
+                                [ onClick (ChangeLanguage item.lang), selected (model.lang == item.lang) ]
+                                [ text item.text ]
+                        )
+                        getLanguageList
+                ]
             ]
         ]
 
@@ -299,7 +318,7 @@ menuDown model =
         [ class "menu-down" ]
         [ container []
             [ fieldGroup [ class "base-menu" ]
-                [ iconButton Icons.trash2 [ UI.Color.is DangerLight, onClick RemoveImage, available ] [ text "移除当前图片" ]
+                [ iconButton Icons.trash2 [ UI.Color.is DangerLight, onClick RemoveImage, available ] [ text model.translations.button.removeBaseImage ]
 
                 {- , iconButton Icons.crop [ available ] [ text "裁剪" ]
                    , div [ style "display" "flex" ] [ Icons.zoomOut, slider 0 100 zoom [] [], Icons.zoomIn ]
@@ -309,7 +328,7 @@ menuDown model =
                 Just arr ->
                     case Array.get model.selectedIndex arr of
                         Just index ->
-                            textModify index
+                            textModify model.translations index
 
                         Nothing ->
                             div [] []
@@ -317,7 +336,7 @@ menuDown model =
                 Nothing ->
                     div [] []
             ]
-        , columns [] [ column [] [ iconButton Icons.download [ UI.Color.is Primary, class "is-fullwidth", onClick SaveImage ] [ text "保存" ] ] ]
+        , columns [] [ column [] [ iconButton Icons.download [ UI.Color.is Primary, class "is-fullwidth", onClick SaveImage ] [ text model.translations.button.save ] ] ]
         ]
 
 
@@ -325,8 +344,8 @@ menuDown model =
 -- 文字水印修改
 
 
-textModify : Watermark -> Html Msg
-textModify cur =
+textModify : Translation -> Watermark -> Html Msg
+textModify t cur =
     let
         ( px, py ) =
             cur.position
@@ -338,30 +357,30 @@ textModify cur =
         [ columns []
             [ column []
                 [ fieldHorizontal []
-                    "旋转"
+                    t.label.rotate
                     [ slider 0 360 (round cur.rotation) [ onChange (\rot -> UpdateWatermark { cur | rotation = Maybe.withDefault 0 (String.toFloat rot) }) ] []
                     , label [] [ text (String.fromFloat cur.rotation ++ "°") ]
                     ]
                 ]
             , column []
                 [ fieldHorizontal []
-                    "坐标"
-                    [ input [ value px, onInput (\t -> UpdateWatermark { cur | position = ( t, py ) }), disabled (cur.tiled == True) ] []
-                    , input [ value py, onInput (\t -> UpdateWatermark { cur | position = ( px, t ) }), disabled (cur.tiled == True) ] []
+                    t.label.coordinate
+                    [ input [ value px, onInput (\w -> UpdateWatermark { cur | position = ( w, py ) }), disabled (cur.tiled == True) ] []
+                    , input [ value py, onInput (\w -> UpdateWatermark { cur | position = ( px, w ) }), disabled (cur.tiled == True) ] []
                     ]
                 ]
             ]
         , case cur.type_ of
             Text ->
                 columns []
-                    [ column [] [ fieldHorizontal [] "颜色" [ input [ value cur.color, onInput (\t -> UpdateWatermark { cur | color = t }), placeholder "#000000" ] [] ] ]
+                    [ column [] [ fieldHorizontal [] t.label.color [ input [ value cur.color, onInput (\w -> UpdateWatermark { cur | color = w }), placeholder "#000000" ] [] ] ]
                     , column [ Size.width 6 ]
                         [ fieldHorizontal []
-                            "字体"
-                            [ input [ value cur.font, onInput (\t -> UpdateFont { cur | font = t }), placeholder "serif" ] []
+                            t.label.font
+                            [ input [ value cur.font, onInput (\w -> UpdateFont { cur | font = w }), placeholder "serif" ] []
                             , input
                                 [ value cur.fontSize
-                                , onInput (\t -> UpdateFont { cur | fontSize = t })
+                                , onInput (\w -> UpdateFont { cur | fontSize = w })
                                 , placeholder "24"
                                 ]
                                 []
@@ -374,33 +393,33 @@ textModify cur =
         , columns []
             [ column [ Size.width 6 ]
                 [ fieldHorizontal []
-                    "透明"
+                    t.label.opacity
                     [ slider 0 100 cur.opacity [ onChange (\op -> UpdateWatermark { cur | opacity = Maybe.withDefault 0 (String.toInt op) }) ] []
                     , label [] [ text (String.fromInt cur.opacity ++ "%") ]
                     ]
                 ]
             , case cur.type_ of
                 Text ->
-                    column [] [ fieldHorizontal [] "内容" [ input [ value cur.text, onInput (\t -> UpdateFont { cur | text = t }) ] [] ] ]
+                    column [] [ fieldHorizontal [] t.label.content [ input [ value cur.text, onInput (\w -> UpdateFont { cur | text = w }) ] [] ] ]
 
                 Image ->
-                    column [] [ fieldHorizontal [] "尺寸" [ input [ value cur.fontSize, onInput (\t -> UpdateWatermark { cur | fontSize = t }), placeholder "1" ] [] ] ]
+                    column [] [ fieldHorizontal [] t.label.size [ input [ value cur.fontSize, onInput (\w -> UpdateWatermark { cur | fontSize = w }), placeholder "1" ] [] ] ]
             ]
         , columns []
-            [ column [] [ fieldHorizontal [] "平铺" [ checkbox cur.tiled "" [ onClick (UpdateWatermark { cur | tiled = Basics.not cur.tiled }) ] ] ]
+            [ column [] [ fieldHorizontal [] t.label.tile [ checkbox cur.tiled "" [ onClick (UpdateWatermark { cur | tiled = Basics.not cur.tiled }) ] ] ]
             , column []
                 [ fieldHorizontal []
-                    "间距"
+                    t.label.spacing
                     [ input
                         [ value gx
-                        , onInput (\t -> UpdateWatermark { cur | gap = ( t, gy ) })
+                        , onInput (\w -> UpdateWatermark { cur | gap = ( w, gy ) })
                         , disabled (Basics.not cur.tiled)
                         , placeholder "0"
                         ]
                         []
                     , input
                         [ value gy
-                        , onInput (\t -> UpdateWatermark { cur | gap = ( gx, t ) })
+                        , onInput (\w -> UpdateWatermark { cur | gap = ( gx, w ) })
                         , disabled (Basics.not cur.tiled)
                         , placeholder "0"
                         ]
@@ -439,7 +458,16 @@ workTable model =
         []
         [ case model.imageState of
             None ->
-                uploadFrame
+                container
+                    [ class "has-text-primary"
+                    , class "upload-frame"
+                    ]
+                    [ div
+                        [ onClick (ImageUpload Base) ]
+                        [ Icons.image
+                        , span [] [ text model.translations.button.clickToUpload ]
+                        ]
+                    ]
 
             Loaded ->
                 container
@@ -477,20 +505,6 @@ workTable model =
                                 []
                         )
                     ]
-        ]
-
-
-uploadFrame : Html Msg
-uploadFrame =
-    container
-        [ class "has-text-primary"
-        , class "upload-frame"
-        ]
-        [ div
-            [ onClick (ImageUpload Base) ]
-            [ Icons.image
-            , span [] [ text "点击上传" ]
-            ]
         ]
 
 

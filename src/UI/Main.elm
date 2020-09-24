@@ -159,6 +159,11 @@ selectMultiple size attr list selected msg =
         ]
 
 
+select : List (Attribute msg) -> List (Html msg) -> Html msg
+select attr list =
+    div (List.append [ class "select" ] attr) [ Html.select [] list ]
+
+
 
 -- Use Bulma-slider
 

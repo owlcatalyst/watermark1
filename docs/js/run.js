@@ -6,11 +6,13 @@ formats.forEach((fmt) => {
   if (canvas0.toDataURL(fmt).split(/[;:]/)[1].trim() == fmt)
     supportFormats.push(fmt);
 });
+//浏览器使用语言 
+const currentLang = navigator.language;
 
 //init
 var app = Elm.Main.init({
   node: document.getElementById("app"),
-  flags: supportFormats,
+  flags: { supportedFormats: supportFormats, lang: currentLang },
 });
 //保存图片
 app.ports.saveImage.subscribe(function (message) {
