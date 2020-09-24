@@ -7,7 +7,6 @@ import Canvas.Settings.Text as Text
 import Color
 import Model exposing (Model, Size, Watermark)
 import Parser exposing ((|.), (|=), Parser, chompIf, end, getChompedString, run, succeed, symbol)
-import Svg.Attributes exposing (fontSize)
 
 
 renderImage : Model -> Watermark -> List Canvas.Renderable
@@ -160,8 +159,8 @@ intFromHexString hex =
 
 vaildPos : ( String, String ) -> Size -> { x : Float, y : Float }
 vaildPos ( px, py ) size =
-    { x = clamp 0.0 size.width (Maybe.withDefault (size.width / 2) (String.toFloat px))
-    , y = clamp 0.0 size.height (Maybe.withDefault (size.height / 2) (String.toFloat py))
+    { x = Maybe.withDefault (size.width / 2) (String.toFloat px)
+    , y = Maybe.withDefault (size.height / 2) (String.toFloat py)
     }
 
 

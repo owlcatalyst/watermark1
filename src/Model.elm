@@ -26,6 +26,27 @@ type alias Size =
     }
 
 
+type alias Point =
+    { x : Float
+    , y : Float
+    }
+
+
+type alias CalcPos =
+    { x : Float
+    , y : Float
+    , imgw : Basics.Float
+    , imgh : Float
+    , canw : Float
+    , canh : Float
+    }
+
+
+type DragState
+    = Static
+    | Moving
+
+
 type alias Model =
     { imageUrl : String
     , imageTexture : Maybe Texture.Texture
@@ -40,6 +61,9 @@ type alias Model =
     , supportedFormat : List String
     , log : String
     , tempWatermark : Maybe Watermark
+    , clickPoint : Point
+    , dragState : DragState
+    , radio : Float
     }
 
 
@@ -79,6 +103,9 @@ initModel fmts =
     , supportedFormat = fmts
     , log = "应用启动"
     , tempWatermark = Nothing
+    , clickPoint = { x = 0, y = 0 }
+    , dragState = Static
+    , radio = 0
     }
 
 
@@ -181,6 +208,31 @@ updateSize width model =
             model
 
 
+updatePosition : Point -> Model -> Model
+updatePosition pos model =
+    case model.watermark of
+        Just arr ->
+            case Array.get model.selectedIndex arr of
+                Just watermark ->
+                    let
+                        ( x, y ) =
+                            watermark.position
+
+                        newX =
+                            String.fromFloat <| Maybe.withDefault 0 (String.toFloat x) + ((-model.clickPoint.x + pos.x) * model.radio)
+
+                        newY =
+                            String.fromFloat <| Maybe.withDefault 0 (String.toFloat y) + ((-model.clickPoint.y + pos.y) * model.radio)
+                    in
+                    { model | watermark = Just (Array.set model.selectedIndex { watermark | position = ( newX, newY ) } arr), clickPoint = { x = pos.x, y = pos.y } }
+
+                Nothing ->
+                    model
+
+        Nothing ->
+            model
+
+
 
 -- 文字数据生成
 
@@ -239,6 +291,7 @@ formatData =
       }
     ]
 
-supportedUploadFormat:List String 
-supportedUploadFormat = 
+
+supportedUploadFormat : List String
+supportedUploadFormat =
     [ "image/jpeg", "image/png", "image/webp" ]

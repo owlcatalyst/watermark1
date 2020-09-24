@@ -2,6 +2,7 @@ port module Main exposing (main)
 
 import Array exposing (Array)
 import Browser
+import Browser.Events exposing (onMouseMove, onMouseUp)
 import Canvas
 import Canvas.Texture as Texture
 import File exposing (File)
@@ -11,7 +12,7 @@ import Html.Attributes exposing (checked, class, disabled, href, name, placehold
 import Html.Events exposing (on, onClick, onInput)
 import Json.Decode as D
 import Json.Encode as E
-import Model as M exposing (BasicImageState(..), FormatData, ImageType(..), Model, Watermark, WatermarkType(..))
+import Model as M exposing (BasicImageState(..), DragState(..), FormatData, ImageType(..), Model, Point, Watermark, WatermarkType(..))
 import Render exposing (renderImage, renderText)
 import Task
 import UI.Color exposing (ColorType(..))
@@ -58,6 +59,9 @@ type Msg
     | UpdateFontCDN String
     | SaveImage
     | RecvTextWidth Float
+    | DragStart PosSize
+    | DragMove Point
+    | DragStop Point
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -179,6 +183,15 @@ update msg model =
 
         RecvTextWidth w ->
             ( M.updateSize w model, Cmd.none )
+
+        DragStart pt ->
+            ( { model | clickPoint = { x = pt.x, y = pt.y }, dragState = Moving, radio = model.imageSize.height / pt.canh }, Cmd.none )
+
+        DragMove point ->
+            ( M.updatePosition point model, Cmd.none )
+
+        DragStop _ ->
+            ( { model | dragState = Static }, Cmd.none )
 
 
 
@@ -447,7 +460,7 @@ workTable model =
                                         []
                                 )
                         }
-                        []
+                        [ onCanvasMouseDown DragStart ]
                         (case model.imageTexture of
                             Just tex ->
                                 List.append
@@ -486,8 +499,17 @@ uploadFrame =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions _ =
-    receiveTextWidth RecvTextWidth
+subscriptions model =
+    case model.dragState of
+        Static ->
+            receiveTextWidth RecvTextWidth
+
+        Moving ->
+            Sub.batch
+                [ receiveTextWidth RecvTextWidth
+                , onMouseMove (D.map DragMove decodeMove)
+                , onMouseUp (D.map DragStop decodeMove)
+                ]
 
 
 
@@ -507,9 +529,35 @@ port receiveTextWidth : (Float -> msg) -> Sub msg
 --Helper------------------------------------------------------------------------------------------------
 
 
+type alias PosSize =
+    { x : Float
+    , y : Float
+    , canw : Float
+    , canh : Float
+    }
+
+
 onChange : (String -> Msg) -> Html.Attribute Msg
 onChange number =
     on "change" <| D.map number <| D.at [ "target", "value" ] D.string
+
+
+onCanvasMouseDown : (PosSize -> Msg) -> Html.Attribute Msg
+onCanvasMouseDown position =
+    on "mousedown" <|
+        D.map position <|
+            D.map4 PosSize
+                (D.field "pageX" D.float)
+                (D.field "pageY" D.float)
+                (D.at [ "target", "clientWidth" ] D.float)
+                (D.at [ "target", "clientHeight" ] D.float)
+
+
+decodeMove : D.Decoder Point
+decodeMove =
+    D.map2 Point
+        (D.at [ "pageX" ] D.float)
+        (D.at [ "pageY" ] D.float)
 
 
 arrRemove : Int -> Array a -> Array a
