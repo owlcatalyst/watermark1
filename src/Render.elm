@@ -89,7 +89,7 @@ renderText model t =
 
 
 
--- 考虑到旋转和移动，画4倍大（在有别的解决方法之前）
+-- 考虑到旋转和移动，画9倍大（在有别的解决方法之前）
 
 
 createPattern : Size -> Size -> ( String, String ) -> (( Float, Float ) -> Canvas.Renderable) -> List Canvas.Renderable
@@ -108,13 +108,13 @@ createPattern psize imagesize gap render =
 
         hr : Int -> Int -> Canvas.Renderable
         hr a b =
-            render ( toFloat a * fw - imagesize.width / 2, toFloat b * fh - imagesize.height / 2 )
+            render ( toFloat a * fw - imagesize.width , toFloat b * fh - imagesize.height  )
 
         heightRender : Int -> List Canvas.Renderable
         heightRender a =
-            List.map (\b -> hr a b) (List.range 1 (ceiling (imagesize.height * 2 / fh)))
+            List.map (\b -> hr a b) (List.range 1 (ceiling (imagesize.height * 3 / fh)))
     in
-    List.concatMap heightRender (List.range 1 (ceiling (imagesize.width * 2 / fw)))
+    List.concatMap heightRender (List.range 1 (ceiling (imagesize.width * 3 / fw)))
 
 
 
