@@ -224,7 +224,11 @@ updatePosition pos model =
                         newY =
                             String.fromFloat <| Maybe.withDefault 0 (String.toFloat y) + ((-model.clickPoint.y + pos.y) * model.radio)
                     in
-                    { model | watermark = Just (Array.set model.selectedIndex { watermark | position = ( newX, newY ) } arr), clickPoint = { x = pos.x, y = pos.y } }
+                    if watermark.tiled == False then
+                        { model | watermark = Just (Array.set model.selectedIndex { watermark | position = ( newX, newY ) } arr), clickPoint = { x = pos.x, y = pos.y } }
+
+                    else
+                        { model | clickPoint = { x = pos.x, y = pos.y } }
 
                 Nothing ->
                     model

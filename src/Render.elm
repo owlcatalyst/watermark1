@@ -21,19 +21,14 @@ renderImage model mark =
         realSize =
             { width = mark.size.width * fontSize, height = mark.size.height * fontSize }
 
-        ( transX, transY ) =
-            ( (pos.x + realSize.width / 2) / fontSize
-            , (pos.y + realSize.height / 2) / fontSize
-            )
-
-        image tex ( x, y ) =
+        image tex ( x, y ) ( centerX, centerY ) =
             Canvas.texture
                 [ alpha <| toFloat mark.opacity / 100.0
                 , transform
                     [ scale fontSize fontSize
-                    , translate transX transY
+                    , translate centerX centerY
                     , rotate (degrees mark.rotation)
-                    , translate -transX -transY
+                    , translate -centerX -centerY
                     ]
                 ]
                 ( x / fontSize, y / fontSize )
@@ -42,10 +37,10 @@ renderImage model mark =
     case mark.texture of
         Just tex ->
             if mark.tiled then
-                createPattern realSize model.imageSize mark.gap (image tex)
+                createPattern model.imageSize mark (image tex)
 
             else
-                [ image tex ( pos.x, pos.y ) ]
+                [ image tex ( pos.x, pos.y ) ( (pos.x + realSize.width / 2) / fontSize, (pos.y + realSize.height / 2) / fontSize ) ]
 
         Nothing ->
             []
@@ -68,53 +63,53 @@ renderText model t =
                 Err _ ->
                     Color.rgb255 0 0 0
 
-        text ( c, d ) =
+        text ( x, y ) ( centerX, centerY ) =
             Canvas.text
                 [ fill color
                 , alpha <| toFloat t.opacity / 100.0
                 , Text.font { size = fontSize, family = t.font }
                 , Text.align Text.Center
                 , transform
-                    [ translate pos.x pos.y, rotate (degrees t.rotation), translate -pos.x -pos.y ]
+                    [ translate centerX centerY, rotate (degrees t.rotation), translate -centerX -centerY ]
                 ]
-                ( c, d )
+                ( x, y )
                 --坐标
                 t.text
     in
     if t.tiled then
-        createPattern t.size model.imageSize t.gap text
+        createPattern model.imageSize t text
 
     else
-        [ text ( pos.x, pos.y ) ]
+        [ text ( pos.x, pos.y ) ( pos.x, pos.y - (toFloat fontSize/2) ) ]
 
 
 
--- 考虑到旋转和移动，画9倍大（在有别的解决方法之前）
+-- 考虑到旋转和移动，画4倍大（在有别的解决方法之前）
 
 
-createPattern : Size -> Size -> ( String, String ) -> (( Float, Float ) -> Canvas.Renderable) -> List Canvas.Renderable
-createPattern psize imagesize gap render =
+createPattern : Size -> Watermark -> (( Float, Float ) -> ( Float, Float ) -> Canvas.Renderable) -> List Canvas.Renderable
+createPattern imageSize mark render =
     let
         vg =
-            vaildGap gap
+            vaildGap mark.gap
 
         -- 实际计算的元素宽
         fw =
-            psize.width + vg.x
+            mark.size.width + vg.x
 
         -- 实际计算的元素高
         fh =
-            psize.height + vg.y
+            mark.size.height + vg.y
 
         hr : Int -> Int -> Canvas.Renderable
         hr a b =
-            render ( toFloat a * fw - imagesize.width , toFloat b * fh - imagesize.height  )
+            render ( toFloat a * fw - imageSize.width/2, toFloat b * fh - imageSize.height/2 ) ( imageSize.width / 2,imageSize.height / 2 )
 
         heightRender : Int -> List Canvas.Renderable
         heightRender a =
-            List.map (\b -> hr a b) (List.range 1 (ceiling (imagesize.height * 3 / fh)))
+            List.map (\b -> hr a b) (List.range 1 (ceiling (imageSize.height * 2 / fh)))
     in
-    List.concatMap heightRender (List.range 1 (ceiling (imagesize.width * 3 / fw)))
+    List.concatMap heightRender (List.range 1 (ceiling (imageSize.width * 2 / fw)))
 
 
 
