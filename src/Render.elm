@@ -5,7 +5,7 @@ import Canvas.Settings exposing (fill)
 import Canvas.Settings.Advanced exposing (alpha, rotate, scale, transform, translate)
 import Canvas.Settings.Text as Text
 import Color
-import Model exposing (Model, Size, Watermark, WatermarkType(..),getDefaultFontSize)
+import Model exposing (Model, Size, Watermark, WatermarkType(..), getDefaultFontSize)
 import Parser exposing ((|.), (|=), Parser, chompIf, end, getChompedString, run, succeed, symbol)
 
 
@@ -90,9 +90,6 @@ renderText model t =
 createPattern : Size -> Watermark -> (( Float, Float ) -> ( Float, Float ) -> Canvas.Renderable) -> List Canvas.Renderable
 createPattern imageSize mark render =
     let
-        n =
-            toFloat <| ceiling <| 2 * imageSize.width / imageSize.height
-
         vg =
             vaildGap mark.gap
 
@@ -107,17 +104,22 @@ createPattern imageSize mark render =
                     , mark.size.height * Maybe.withDefault 1 (String.toFloat mark.fontSize) + vg.y
                     )
 
+        n =
+            toFloat <| ceiling <| max imageSize.width imageSize.height / min fw fh
+
         -- 绘制行列数
         row =
-            List.range 1 (ceiling (imageSize.height * n / fh))
+            List.range 1 (round (n*3))
 
         col =
-            List.range 1 (ceiling (imageSize.width * n / fw))
+            List.range 1 (round (n*3))
 
         -- 绘图中心点 旋转中心点
         hr : Int -> Int -> Canvas.Renderable
         hr a b =
-            render ( toFloat a * fw - imageSize.width * (n - 1) / 2, toFloat b * fh - imageSize.height * (n - 1) / 2 ) ( imageSize.width / 2, imageSize.height / 2 )
+            render
+                ( toFloat a * fw - fw * n, toFloat b * fh - fh * n )
+                ( imageSize.width / 2, imageSize.height / 2 )
 
         rowRender : Int -> List Canvas.Renderable
         rowRender a =
