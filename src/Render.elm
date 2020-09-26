@@ -5,7 +5,7 @@ import Canvas.Settings exposing (fill)
 import Canvas.Settings.Advanced exposing (alpha, rotate, scale, transform, translate)
 import Canvas.Settings.Text as Text
 import Color
-import Model exposing (Model, Size, Watermark)
+import Model exposing (Model, Size, Watermark, WatermarkType(..),getDefaultFontSize)
 import Parser exposing ((|.), (|=), Parser, chompIf, end, getChompedString, run, succeed, symbol)
 
 
@@ -25,10 +25,10 @@ renderImage model mark =
             Canvas.texture
                 [ alpha <| toFloat mark.opacity / 100.0
                 , transform
-                    [ scale fontSize fontSize
-                    , translate centerX centerY
+                    [ translate centerX centerY
                     , rotate (degrees mark.rotation)
                     , translate -centerX -centerY
+                    , scale fontSize fontSize
                     ]
                 ]
                 ( x / fontSize, y / fontSize )
@@ -40,7 +40,7 @@ renderImage model mark =
                 createPattern model.imageSize mark (image tex)
 
             else
-                [ image tex ( pos.x, pos.y ) ( (pos.x + realSize.width / 2) / fontSize, (pos.y + realSize.height / 2) / fontSize ) ]
+                [ image tex ( pos.x, pos.y ) ( pos.x + realSize.width / 2, pos.y + realSize.height / 2 ) ]
 
         Nothing ->
             []
@@ -53,7 +53,7 @@ renderText model t =
             vaildPos t.position model.imageSize
 
         fontSize =
-            Maybe.withDefault 24 (String.toInt t.fontSize)
+            Maybe.withDefault (round (getDefaultFontSize model.imageSize)) (String.toInt t.fontSize)
 
         color =
             case run hexToColor t.color of
@@ -80,36 +80,50 @@ renderText model t =
         createPattern model.imageSize t text
 
     else
-        [ text ( pos.x, pos.y ) ( pos.x, pos.y - (toFloat fontSize/2) ) ]
+        [ text ( pos.x, pos.y ) ( pos.x, pos.y - (toFloat fontSize / 2) ) ]
 
 
 
--- 考虑到旋转和移动，画4倍大（在有别的解决方法之前）
+-- 考虑到旋转和移动，画n倍大（在有别的解决方法之前）
 
 
 createPattern : Size -> Watermark -> (( Float, Float ) -> ( Float, Float ) -> Canvas.Renderable) -> List Canvas.Renderable
 createPattern imageSize mark render =
     let
+        n =
+            toFloat <| ceiling <| 2 * imageSize.width / imageSize.height
+
         vg =
             vaildGap mark.gap
 
-        -- 实际计算的元素宽
-        fw =
-            mark.size.width + vg.x
+        -- 实际计算的元素宽高
+        ( fw, fh ) =
+            case mark.type_ of
+                Text ->
+                    ( mark.size.width + vg.x, mark.size.height + vg.y )
 
-        -- 实际计算的元素高
-        fh =
-            mark.size.height + vg.y
+                Image ->
+                    ( mark.size.width * Maybe.withDefault 1 (String.toFloat mark.fontSize) + vg.x
+                    , mark.size.height * Maybe.withDefault 1 (String.toFloat mark.fontSize) + vg.y
+                    )
 
+        -- 绘制行列数
+        row =
+            List.range 1 (ceiling (imageSize.height * n / fh))
+
+        col =
+            List.range 1 (ceiling (imageSize.width * n / fw))
+
+        -- 绘图中心点 旋转中心点
         hr : Int -> Int -> Canvas.Renderable
         hr a b =
-            render ( toFloat a * fw - imageSize.width/2, toFloat b * fh - imageSize.height/2 ) ( imageSize.width / 2,imageSize.height / 2 )
+            render ( toFloat a * fw - imageSize.width * (n - 1) / 2, toFloat b * fh - imageSize.height * (n - 1) / 2 ) ( imageSize.width / 2, imageSize.height / 2 )
 
-        heightRender : Int -> List Canvas.Renderable
-        heightRender a =
-            List.map (\b -> hr a b) (List.range 1 (ceiling (imageSize.height * 2 / fh)))
+        rowRender : Int -> List Canvas.Renderable
+        rowRender a =
+            List.map (\b -> hr a b) row
     in
-    List.concatMap heightRender (List.range 1 (ceiling (imageSize.width * 2 / fw)))
+    List.concatMap rowRender col
 
 
 

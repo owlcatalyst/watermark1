@@ -156,29 +156,38 @@ initModel flag =
 
 initWatermark : WatermarkType -> String -> Size -> Watermark
 initWatermark tp str size =
-    let
-        ( txt, tex, fsize ) =
-            case tp of
-                Text ->
-                    ( str, "", "24" )
+    case tp of
+        Text ->
+            { type_ = tp
+            , text = str
+            , url = ""
+            , texture = Nothing
+            , size = { width = 0, height = 0 }
+            , fontSize = String.fromFloat (getDefaultFontSize size)
+            , tiled = False
+            , color = "#000000"
+            , opacity = 100
+            , gap = ( "0", "0" )
+            , font = "serif"
+            , position = ( String.fromFloat (size.width / 2), String.fromFloat (size.height / 2) )
+            , rotation = 0.0
+            }
 
-                Image ->
-                    ( "", str, "1" )
-    in
-    { type_ = tp
-    , text = txt
-    , url = tex
-    , texture = Nothing
-    , size = { width = 0, height = 0 }
-    , fontSize = fsize
-    , tiled = False
-    , color = "#000000"
-    , opacity = 100
-    , gap = ( "0", "0" )
-    , font = "serif"
-    , position = ( String.fromFloat (size.width / 2), String.fromFloat (size.height / 2) )
-    , rotation = 0.0
-    }
+        Image ->
+            { type_ = tp
+            , text = ""
+            , url = str
+            , texture = Nothing
+            , size = { width = 0, height = 0 }
+            , fontSize = "1"
+            , tiled = False
+            , color = "#000000"
+            , opacity = 100
+            , gap = ( "0", "0" )
+            , font = "serif"
+            , position = ( "0", "0" )
+            , rotation = 0.0
+            }
 
 
 
@@ -242,7 +251,7 @@ updateSize width model =
                 Just watermark ->
                     let
                         size =
-                            { width = width, height = Maybe.withDefault 24.0 (String.toFloat watermark.fontSize) }
+                            { width = width, height = Maybe.withDefault (getDefaultFontSize model.imageSize) (String.toFloat watermark.fontSize) }
                     in
                     { model | watermark = Just (Array.set model.selectedIndex { watermark | size = size } arr) }
 
@@ -344,3 +353,7 @@ formatData =
 supportedUploadFormat : List String
 supportedUploadFormat =
     [ "image/jpeg", "image/png", "image/webp" ]
+
+getDefaultFontSize: Size -> Float
+getDefaultFontSize  size = 
+    size.width / 15
