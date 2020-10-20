@@ -2,8 +2,6 @@
 
 Add watermark to images online. No backend.
 
-[TODO](https://github.com/owlzou/watermark1/projects/1)
-
 **Special Thanks**
 
 - [elm-color](https://github.com/avh4/elm-color/)

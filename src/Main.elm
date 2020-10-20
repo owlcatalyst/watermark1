@@ -7,8 +7,8 @@ import Canvas
 import Canvas.Texture as Texture
 import File exposing (File)
 import File.Select as Select
-import Html exposing (Html, div, span, text)
-import Html.Attributes exposing (checked, class, disabled, href, name, placeholder, rel, selected, style, value)
+import Html exposing (Html, div, img, span, text)
+import Html.Attributes exposing (checked, class, disabled, href, name, placeholder, rel, selected, src, style, value)
 import Html.Events exposing (on, onClick, onInput)
 import I18n exposing (Language, Translation, getLanguageList, getTranslation)
 import Json.Decode as D
@@ -231,7 +231,7 @@ menuLeft model =
     section
         []
         [ container [ style "width" "100%" ]
-            [ title [] [ text "Watermark+1" ]
+            [ title [] [ img [ class "icon", src "./icon.png" ] [], text "Watermark+1" ]
             , notification [ UI.Color.is InfoLight ] [ text model.log ]
             , field [] [ label [] [ text t.menu.watermarkList ] ]
             , field []
