@@ -1,7 +1,7 @@
 module UI.Main exposing (..)
 
 import Html exposing (Attribute, Html, div, h1, span, text)
-import Html.Attributes as Attributes exposing (class, style)
+import Html.Attributes as Attributes exposing (attribute, class, style)
 import Html.Events exposing (onClick)
 import UI.Icons as Icons
 
@@ -143,6 +143,11 @@ input attr list =
     Html.input (List.append [ class "input", Attributes.type_ "text" ] attr) list
 
 
+textarea : List (Attribute msg) -> List (Html msg) -> Html msg
+textarea attr list =
+    Html.textarea (List.append [ class "textarea"] attr) list
+
+
 
 {-
    size：显示的高度个数
@@ -207,4 +212,32 @@ card : List (Attribute msg) -> List (Html msg) -> Html msg
 card attr list =
     div (List.append [ class "card" ] attr)
         [ div [ class "card-content" ] list
+        ]
+
+
+modal : List (Attribute msg) -> List (Html msg) -> msg -> Bool -> Html msg
+modal attr list msg isOpen =
+    let
+        display =
+            if isOpen then
+                "block"
+
+            else
+                "none"
+    in
+    div [ class "modal", style "display" display ]
+        [ div [ class "modal-background" ]
+            [ div
+                (List.append
+                    [ class "modal-content"
+                    , style "margin" "0 auto"
+                    , style "position" "relative"
+                    , style "top" "50vh"
+                    , style "transform" "translateY(-50%)"
+                    ]
+                    attr
+                )
+                list
+            , Html.button [ class "modal-close is-large", attribute "aria-label" "close", onClick msg ] []
+            ]
         ]

@@ -1,7 +1,8 @@
-module UI.Color exposing (ColorType(..), hasBackground, hasText, is)
+module UI.Style exposing (ColorType(..), hasBackground, hasText, is, outlined)
 
-import Html.Attributes exposing (class)
 import Html exposing (Attribute)
+import Html.Attributes exposing (class)
+
 
 type ColorType
     = White
@@ -20,6 +21,11 @@ type ColorType
     | SuccessLight
     | WarningLight
     | DangerLight
+
+
+outlined : Attribute msg
+outlined =
+    class "is-outlined"
 
 
 is : ColorType -> Attribute msg

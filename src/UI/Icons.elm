@@ -1,12 +1,13 @@
-module UI.Icons
-    exposing
-        ( crop
-        , download
-        , helpCircle
-        , image
-        , plus
-        , trash2
-        )
+module UI.Icons exposing
+    ( code
+    , copy
+    , crop
+    , download
+    , helpCircle
+    , image
+    , plus
+    , trash2
+    )
 
 import Html exposing (Html)
 import Svg exposing (Svg, svg)
@@ -33,6 +34,22 @@ crop =
     svgFeatherIcon "crop"
         [ Svg.path [ d "M6.13 1L6 16a2 2 0 0 0 2 2h15" ] []
         , Svg.path [ d "M1 6.13L16 6a2 2 0 0 1 2 2v15" ] []
+        ]
+
+
+code : Html msg
+code =
+    svgFeatherIcon "code"
+        [ Svg.polyline [ points "16 18 22 12 16 6" ] []
+        , Svg.polyline [ points "8 6 2 12 8 18" ] []
+        ]
+
+
+copy : Html msg
+copy =
+    svgFeatherIcon "copy"
+        [ Svg.rect [ Svg.Attributes.x "9", y "9", width "13", height "13", rx "2", ry "2" ] []
+        , Svg.path [ d "M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" ] []
         ]
 
 

@@ -68,6 +68,7 @@ type alias Model =
     , radio : Float
     , translations : Translation
     , lang : Language
+    , base64Output : Bool
     }
 
 
@@ -101,34 +102,8 @@ initModel flag =
             D.map2 Flag
                 (D.at [ "supportedFormats" ] (D.list D.string))
                 (D.at [ "lang" ] D.string)
-    in
-    case D.decodeValue flagDecoder flag of
-        Ok f ->
-            { imageUrl = ""
-            , imageTexture = Nothing
-            , imageSize = { width = 0, height = 0 }
-            , imageName = ""
-            , imageState = None
-            , watermark = Nothing
-            , watermarkInput = ""
-            , selectedIndex = -1
-            , format =
-                { name = "PNG"
-                , ext = ".png"
-                , mime = "image/png"
-                }
-            , fontCDN = ""
-            , supportedFormat = f.supportedFormats
-            , log = (getTranslation (str2Lang f.lang)).log.appReady
-            , tempWatermark = Nothing
-            , clickPoint = { x = 0, y = 0 }
-            , dragState = Static
-            , radio = 0
-            , translations = getTranslation (str2Lang f.lang)
-            , lang = str2Lang f.lang
-            }
 
-        Err err ->
+        base =
             { imageUrl = ""
             , imageTexture = Nothing
             , imageSize = { width = 0, height = 0 }
@@ -144,14 +119,27 @@ initModel flag =
                 }
             , fontCDN = ""
             , supportedFormat = []
-            , log = D.errorToString err
+            , log = ""
             , tempWatermark = Nothing
             , clickPoint = { x = 0, y = 0 }
             , dragState = Static
             , radio = 0
             , translations = getTranslation EN
             , lang = EN
+            , base64Output = False
             }
+    in
+    case D.decodeValue flagDecoder flag of
+        Ok f ->
+            { base
+                | supportedFormat = f.supportedFormats
+                , log = (getTranslation (str2Lang f.lang)).log.appReady
+                , translations = getTranslation (str2Lang f.lang)
+                , lang = str2Lang f.lang
+            }
+
+        Err err ->
+            { base | log = D.errorToString err }
 
 
 initWatermark : WatermarkType -> String -> Size -> Watermark
@@ -311,10 +299,17 @@ encodeImage model =
             let
                 list =
                     String.split "." model.imageName
+
+                name =
+                    List.take (List.length list - 1) list |> List.foldl (++) ""
             in
-            (List.take (List.length list - 1) list |> List.foldl (++) "") ++ model.format.ext
+            if model.base64Output then
+                name ++ "-" ++ String.dropLeft 1 model.format.ext ++ "-base64.txt"
+
+            else
+                name ++ model.format.ext
     in
-    E.object [ ( "format", E.string model.format.mime ), ( "name", E.string rename ) ]
+    E.object [ ( "format", E.string model.format.mime ), ( "name", E.string rename ), ( "base64", E.bool model.base64Output ) ]
 
 
 printSize : Size -> String
@@ -352,8 +347,9 @@ formatData =
 
 supportedUploadFormat : List String
 supportedUploadFormat =
-    [ "image/jpeg", "image/png", "image/webp" ]
+    [ "image/jpeg", "image/png", "image/webp", "image/bmp" ]
 
-getDefaultFontSize: Size -> Float
-getDefaultFontSize  size = 
+
+getDefaultFontSize : Size -> Float
+getDefaultFontSize size =
     size.width / 15

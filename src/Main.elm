@@ -10,16 +10,17 @@ import File.Select as Select
 import Html exposing (Html, div, img, span, text)
 import Html.Attributes exposing (checked, class, disabled, href, name, placeholder, rel, selected, src, style, value)
 import Html.Events exposing (on, onClick, onInput)
+import Html.Lazy exposing (lazy)
 import I18n exposing (Language, Translation, getLanguageList, getTranslation)
 import Json.Decode as D
 import Json.Encode as E
 import Model as M exposing (BasicImageState(..), DragState(..), FormatData, ImageType(..), Model, Point, Watermark, WatermarkType(..))
 import Render exposing (renderImage, renderText)
 import Task
-import UI.Color exposing (ColorType(..))
 import UI.Icons as Icons
 import UI.Main exposing (..)
 import UI.Size as Size
+import UI.Style exposing (ColorType(..))
 
 
 
@@ -57,6 +58,7 @@ type Msg
     | UpdateWatermark Watermark
     | UpdateFont Watermark --更新水印并重新测量字体宽度
     | UpdateFormat FormatData
+    | Base64Output
     | UpdateFontCDN String
     | SaveImage
     | RecvTextWidth Float
@@ -198,6 +200,9 @@ update msg model =
         ChangeLanguage lang ->
             ( { model | translations = getTranslation lang }, Cmd.none )
 
+        Base64Output ->
+            ( { model | base64Output = not model.base64Output }, Cmd.none )
+
 
 
 -- VIEW
@@ -205,12 +210,12 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div [ UI.Color.hasBackground White ]
+    div [ UI.Style.hasBackground White ]
         [ Html.node "link" [ href model.fontCDN, rel "stylesheet" ] []
         , columns
             []
-            [ column [ Size.width 4 ] [ menuLeft model ]
-            , column [ Size.width 8 ] [ workTable model, menuDown model ]
+            [ column [ Size.width 4 ] [ lazy menuLeft model ]
+            , column [ Size.width 8 ] [ lazy workTable model, lazy menuDown model ]
             ]
         ]
 
@@ -232,7 +237,7 @@ menuLeft model =
         []
         [ container [ style "width" "100%" ]
             [ title [] [ img [ class "icon", src "./icon.png" ] [], text "Watermark+1" ]
-            , notification [ UI.Color.is InfoLight ] [ text model.log ]
+            , notification [ UI.Style.is InfoLight ] [ text model.log ]
             , field [] [ label [] [ text t.menu.watermarkList ] ]
             , field []
                 [ selectMultiple 6
@@ -253,7 +258,7 @@ menuLeft model =
                 ]
             , fieldGroup []
                 [ iconButton Icons.plus [ available, onClick (WatermarkAdd Image) ] [ text t.button.imageWatermark ]
-                , iconButton Icons.trash2 [ UI.Color.is DangerLight, onClick WatermarkRemove ] [ text t.button.deleteWatermark ]
+                , iconButton Icons.trash2 [ UI.Style.is DangerLight, onClick WatermarkRemove ] [ text t.button.deleteWatermark ]
                 ]
             , field [] [ label [] [ text t.menu.outputFormat ] ]
 
@@ -285,6 +290,7 @@ menuLeft model =
                                     [ label [] [ text tp.name ] ]
                         )
                         M.formatData
+                , control [] [ checkbox model.base64Output "Base64" [ onClick Base64Output ] ]
                 ]
             , field [] [ label [] [ text t.menu.fontCDN ] ]
             , field [] [ control [] [ input [ value model.fontCDN, onInput UpdateFontCDN ] [] ] ]
@@ -318,7 +324,7 @@ menuDown model =
         [ class "menu-down" ]
         [ container []
             [ fieldGroup [ class "base-menu" ]
-                [ iconButton Icons.trash2 [ UI.Color.is DangerLight, onClick RemoveImage, available ] [ text model.translations.button.removeBaseImage ]
+                [ iconButton Icons.trash2 [ UI.Style.is DangerLight, onClick RemoveImage, available ] [ text model.translations.button.removeBaseImage ]
 
                 {- , iconButton Icons.crop [ available ] [ text "裁剪" ]
                    , div [ style "display" "flex" ] [ Icons.zoomOut, slider 0 100 zoom [] [], Icons.zoomIn ]
@@ -336,7 +342,7 @@ menuDown model =
                 Nothing ->
                     div [] []
             ]
-        , columns [] [ column [] [ iconButton Icons.download [ UI.Color.is Primary, class "is-fullwidth", onClick SaveImage ] [ text model.translations.button.save ] ] ]
+        , columns [] [ column [] [ iconButton Icons.download [ UI.Style.is Primary, class "is-fullwidth", onClick SaveImage, available ] [ text model.translations.button.save ] ] ]
         ]
 
 
@@ -372,7 +378,7 @@ textModify t cur =
             ]
         , case cur.type_ of
             Text ->
-                columns []
+                lazy (columns [])
                     [ column [] [ fieldHorizontal [] t.label.color [ input [ value cur.color, onInput (\w -> UpdateWatermark { cur | color = w }), placeholder "#000000" ] [] ] ]
                     , column [ Size.width 6 ]
                         [ fieldHorizontal []
@@ -390,7 +396,7 @@ textModify t cur =
 
             Image ->
                 span [] []
-        , columns []
+        , lazy (columns [])
             [ column [ Size.width 6 ]
                 [ fieldHorizontal []
                     t.label.opacity
@@ -405,7 +411,7 @@ textModify t cur =
                 Image ->
                     column [] [ fieldHorizontal [] t.label.size [ input [ value cur.fontSize, onInput (\w -> UpdateWatermark { cur | fontSize = w }), placeholder "1" ] [] ] ]
             ]
-        , columns []
+        , lazy (columns [])
             [ column [] [ fieldHorizontal [] t.label.tile [ checkbox cur.tiled "" [ onClick (UpdateWatermark { cur | tiled = Basics.not cur.tiled }) ] ] ]
             , column []
                 [ fieldHorizontal []
@@ -492,7 +498,7 @@ workTable model =
                         (case model.imageTexture of
                             Just tex ->
                                 List.append
-                                    [ Canvas.texture [] ( 0, 0 ) tex ]
+                                    [ Canvas.clear ( 0, 0 ) model.imageSize.width model.imageSize.height, Canvas.texture [] ( 0, 0 ) tex ]
                                     (case model.watermark of
                                         Just arr ->
                                             List.concatMap renderWatermark (Array.toList arr)
