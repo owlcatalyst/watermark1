@@ -1,6 +1,7 @@
 module Model exposing (..)
 
 import Array exposing (Array)
+import Canvas.Settings.Advanced exposing (GlobalCompositeOperationMode(..))
 import Canvas.Texture as Texture
 import I18n exposing (Language(..), Translation, getTranslation, str2Lang)
 import Json.Decode as D
@@ -86,6 +87,7 @@ type alias Watermark =
     , font : String
     , position : ( String, String )
     , rotation : Float
+    , blendMode : GlobalCompositeOperationMode
     }
 
 
@@ -159,6 +161,7 @@ initWatermark tp str size =
             , font = "serif"
             , position = ( String.fromFloat (size.width / 2), String.fromFloat (size.height / 2) )
             , rotation = 0.0
+            , blendMode = SourceOver
             }
 
         Image ->
@@ -175,6 +178,7 @@ initWatermark tp str size =
             , font = "serif"
             , position = ( "0", "0" )
             , rotation = 0.0
+            , blendMode = SourceOver
             }
 
 
@@ -353,3 +357,24 @@ supportedUploadFormat =
 getDefaultFontSize : Size -> Float
 getDefaultFontSize size =
     size.width / 15
+
+
+getBlendModeList : Translation -> List { blendMode : GlobalCompositeOperationMode, name : String }
+getBlendModeList t =
+    [ { blendMode = SourceOver, name = t.blendMode.sourceOver }
+    , { blendMode = Multiply, name = t.blendMode.multiply }
+    , { blendMode = Screen, name = t.blendMode.screen }
+    , { blendMode = Overlay, name = t.blendMode.overlay }
+    , { blendMode = Darken, name = t.blendMode.darken }
+    , { blendMode = Lighten, name = t.blendMode.lighten }
+    , { blendMode = ColorDodge, name = t.blendMode.colorDodge }
+    , { blendMode = ColorBurn, name = t.blendMode.colorBurn }
+    , { blendMode = HardLight, name = t.blendMode.hardLight }
+    , { blendMode = SoftLight, name = t.blendMode.softLight }
+    , { blendMode = Difference, name = t.blendMode.difference }
+    , { blendMode = Exclusion, name = t.blendMode.exclusion }
+    , { blendMode = Hue, name = t.blendMode.hue }
+    , { blendMode = Saturation, name = t.blendMode.saturation }
+    , { blendMode = Color, name = t.blendMode.color }
+    , { blendMode = Luminosity, name = t.blendMode.luminosity }
+    ]

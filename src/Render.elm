@@ -2,7 +2,7 @@ module Render exposing (renderImage, renderText)
 
 import Canvas
 import Canvas.Settings exposing (fill)
-import Canvas.Settings.Advanced exposing (alpha, rotate, scale, transform, translate)
+import Canvas.Settings.Advanced exposing (alpha, compositeOperationMode, rotate, scale, transform, translate)
 import Canvas.Settings.Text as Text
 import Color
 import Model exposing (Model, Size, Watermark, WatermarkType(..), getDefaultFontSize)
@@ -24,6 +24,7 @@ renderImage model mark =
         image tex ( x, y ) ( centerX, centerY ) =
             Canvas.texture
                 [ alpha <| toFloat mark.opacity / 100.0
+                , compositeOperationMode mark.blendMode
                 , transform
                     [ translate centerX centerY
                     , rotate (degrees mark.rotation)
@@ -47,16 +48,16 @@ renderImage model mark =
 
 
 renderText : Model -> Watermark -> List Canvas.Renderable
-renderText model t =
+renderText model mark =
     let
         pos =
-            vaildPos t.position model.imageSize
+            vaildPos mark.position model.imageSize
 
         fontSize =
-            Maybe.withDefault (round (getDefaultFontSize model.imageSize)) (String.toInt t.fontSize)
+            Maybe.withDefault (round (getDefaultFontSize model.imageSize)) (String.toInt mark.fontSize)
 
         color =
-            case run hexToColor t.color of
+            case run hexToColor mark.color of
                 Ok val ->
                     val
 
@@ -66,18 +67,19 @@ renderText model t =
         text ( x, y ) ( centerX, centerY ) =
             Canvas.text
                 [ fill color
-                , alpha <| toFloat t.opacity / 100.0
-                , Text.font { size = fontSize, family = t.font }
+                , alpha <| toFloat mark.opacity / 100.0
+                , Text.font { size = fontSize, family = mark.font }
                 , Text.align Text.Center
+                , compositeOperationMode mark.blendMode
                 , transform
-                    [ translate centerX centerY, rotate (degrees t.rotation), translate -centerX -centerY ]
+                    [ translate centerX centerY, rotate (degrees mark.rotation), translate -centerX -centerY ]
                 ]
                 ( x, y )
                 --坐标
-                t.text
+                mark.text
     in
-    if t.tiled then
-        createPattern model.imageSize t text
+    if mark.tiled then
+        createPattern model.imageSize mark text
 
     else
         [ text ( pos.x, pos.y ) ( pos.x, pos.y - (toFloat fontSize / 2) ) ]
@@ -109,10 +111,10 @@ createPattern imageSize mark render =
 
         -- 绘制行列数
         row =
-            List.range 1 (round (n*3))
+            List.range 1 (round (n * 3))
 
         col =
-            List.range 1 (round (n*3))
+            List.range 1 (round (n * 3))
 
         -- 绘图中心点 旋转中心点
         hr : Int -> Int -> Canvas.Renderable

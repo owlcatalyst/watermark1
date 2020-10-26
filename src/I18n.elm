@@ -13,6 +13,7 @@ type alias Translation =
     , log : Log
     , self : String
     , lang : Language
+    , blendMode : BlendMode
     }
 
 
@@ -26,6 +27,7 @@ type alias Label =
     , size : String
     , tile : String
     , spacing : String
+    , blendMode : String
     }
 
 
@@ -56,6 +58,28 @@ type alias Log =
     }
 
 
+type alias BlendMode =
+    { sourceOver : String
+
+    -- 省略
+    , multiply : String
+    , screen : String
+    , overlay : String
+    , darken : String
+    , lighten : String
+    , colorDodge : String
+    , colorBurn : String
+    , hardLight : String
+    , softLight : String
+    , difference : String
+    , exclusion : String
+    , hue : String
+    , saturation : String
+    , color : String
+    , luminosity : String
+    }
+
+
 zh : Translation
 zh =
     { self = "中文"
@@ -70,6 +94,7 @@ zh =
         , size = "尺寸"
         , tile = "平铺"
         , spacing = "间距"
+        , blendMode = "混合模式"
         }
     , button =
         { textWatermark = "文字"
@@ -92,6 +117,24 @@ zh =
         , noImage = "未上传图片"
         , appReady = "应用准备就绪"
         }
+    , blendMode =
+        { sourceOver = "默认"
+        , multiply = "正片叠底"
+        , screen = "滤色"
+        , overlay = "叠加"
+        , darken = "变暗"
+        , lighten = "变亮"
+        , colorDodge = "颜色减淡"
+        , colorBurn = "颜色加深"
+        , hardLight = "强光"
+        , softLight = "柔光"
+        , difference = "插值"
+        , exclusion = "排除"
+        , hue = "色调"
+        , saturation = "饱和度"
+        , color = "颜色"
+        , luminosity = "亮度"
+        }
     }
 
 
@@ -109,6 +152,7 @@ en =
         , size = "Size"
         , tile = "Tile"
         , spacing = "Spacing"
+        , blendMode = "Blend Mode"
         }
     , button =
         { textWatermark = "Text"
@@ -130,6 +174,24 @@ en =
         { loadTextureFailed = "Failed to load texture."
         , noImage = "Image not uploaded."
         , appReady = "Ready."
+        }
+    , blendMode =
+        { sourceOver = "Normal"
+        , multiply = "Multiply"
+        , screen = "Screen"
+        , overlay = "Overlay"
+        , darken = "Darken"
+        , lighten = "Lighten"
+        , colorDodge = "Color Dodge"
+        , colorBurn = "Color Burn"
+        , hardLight = "Hard Light"
+        , softLight = "Soft Light"
+        , difference = "Difference"
+        , exclusion = "Exclusion"
+        , hue = "Hue"
+        , saturation = "Saturation"
+        , color = "Color"
+        , luminosity = "Luminosity"
         }
     }
 

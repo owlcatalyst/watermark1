@@ -433,6 +433,22 @@ textModify t cur =
                     ]
                 ]
             ]
+        , lazy (columns [])
+            -- 选择混合模式
+            [ column []
+                [ fieldHorizontal []
+                    t.label.blendMode
+                    [ select [] <|
+                        List.map
+                            (\item ->
+                                Html.option
+                                    [ onClick (UpdateWatermark { cur | blendMode = item.blendMode }), selected (cur.blendMode == item.blendMode) ]
+                                    [ text item.name ]
+                            )
+                            (M.getBlendModeList t)
+                    ]
+                ]
+            ]
         ]
 
 
