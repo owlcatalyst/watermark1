@@ -283,6 +283,23 @@ updatePosition pos model =
             model
 
 
+reset : Watermark -> Model -> Model
+reset watermark model =
+    let
+        blank =
+            initWatermark watermark.type_ "" model.imageSize
+
+        n =
+            { blank
+                | text = watermark.text
+                , url = watermark.url
+                , texture = watermark.texture
+                , size = watermark.size
+            }
+    in
+    updateWatermark n model
+
+
 
 -- 文字数据生成
 

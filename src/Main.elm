@@ -14,6 +14,7 @@ import Html.Lazy exposing (lazy)
 import I18n exposing (Language, Translation, getLanguageList, getTranslation)
 import Json.Decode as D
 import Json.Encode as E
+import Maybe
 import Model as M exposing (BasicImageState(..), DragState(..), FormatData, ImageType(..), Model, Point, Watermark, WatermarkType(..))
 import Render exposing (renderImage, renderText)
 import Task
@@ -57,6 +58,7 @@ type Msg
     | WatermarkRemove --移除水印
     | UpdateWatermark Watermark
     | UpdateFont Watermark --更新水印并重新测量字体宽度
+    | Reset Watermark --重置该水印
     | UpdateFormat FormatData
     | Base64Output
     | UpdateFontCDN String
@@ -203,6 +205,9 @@ update msg model =
         Base64Output ->
             ( { model | base64Output = not model.base64Output }, Cmd.none )
 
+        Reset wm ->
+            ( M.reset wm model, Cmd.none )
+
 
 
 -- VIEW
@@ -325,10 +330,17 @@ menuDown model =
         [ container []
             [ fieldGroup [ class "base-menu" ]
                 [ iconButton Icons.trash2 [ UI.Style.is DangerLight, onClick RemoveImage, available ] [ text model.translations.button.removeBaseImage ]
+                , case model.watermark of
+                    Just arr ->
+                        case Array.get model.selectedIndex arr of
+                            Just index ->
+                                iconButton Icons.rotateCcw [ UI.Style.is InfoLight, onClick (Reset index) ] [ text model.translations.button.reset ]
 
-                {- , iconButton Icons.crop [ available ] [ text "裁剪" ]
-                   , div [ style "display" "flex" ] [ Icons.zoomOut, slider 0 100 zoom [] [], Icons.zoomIn ]
-                -}
+                            Nothing ->
+                                span [] []
+
+                    Nothing ->
+                        span [] []
                 ]
             , case model.watermark of
                 Just arr ->

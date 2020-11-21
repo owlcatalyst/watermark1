@@ -2,8 +2,9 @@
 
 Add watermark to images online. No backend.
 
-**Special Thanks**
+使用的三方代码：
 
+- [Elm](https://elm-lang.org/)
 - [elm-color](https://github.com/avh4/elm-color/)
 - [elm-canvas](https://github.com/joakin/elm-canvas)
 - [elm-feather](https://github.com/feathericons/elm-feather)

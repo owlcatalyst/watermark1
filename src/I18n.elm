@@ -38,6 +38,7 @@ type alias Button =
     , removeBaseImage : String
     , save : String
     , clickToUpload : String
+    , reset:String
     }
 
 
@@ -103,6 +104,7 @@ zh =
         , removeBaseImage = "移除当前图片"
         , save = "保存"
         , clickToUpload = "点击上传"
+        , reset="重置"
         }
     , menu =
         { watermarkList = "水印列表"
@@ -161,6 +163,7 @@ en =
         , removeBaseImage = "Remove Image"
         , save = "Save"
         , clickToUpload = "Click to upload"
+        , reset = "Reset"
         }
     , menu =
         { watermarkList = "Watermark List"
